@@ -1,4 +1,4 @@
-// Веб-версия живёт на GitHub Pages по адресу /tempo-run — путь задаётся только при сборке сайта.
+// Веб-версия живёт на GitHub Pages по адресу /run — путь задаётся только при сборке сайта.
 module.exports = ({ config }) => ({
   ...config,
   experiments: {

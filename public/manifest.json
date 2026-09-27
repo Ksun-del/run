@@ -3,15 +3,15 @@
   "short_name": "RUN",
   "description": "Приложение для бега клуба Pobeda Run",
   "lang": "ru",
-  "start_url": "/tempo-run/",
-  "scope": "/tempo-run/",
+  "start_url": "/run/",
+  "scope": "/run/",
   "display": "standalone",
   "orientation": "portrait",
   "background_color": "#0B0B0C",
   "theme_color": "#0B0B0C",
   "icons": [
-    { "src": "/tempo-run/icon-192.png", "sizes": "192x192", "type": "image/png" },
-    { "src": "/tempo-run/icon-512.png", "sizes": "512x512", "type": "image/png" },
-    { "src": "/tempo-run/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+    { "src": "/run/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/run/icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "/run/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
   ]
 }
