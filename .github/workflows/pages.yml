@@ -1,5 +1,5 @@
 # Веб-версия RUN для iPhone: при каждом изменении в main собирается сайт
-# и публикуется на https://ksun-del.github.io/tempo-run/
+# и публикуется на https://ksun-del.github.io/run/
 name: Веб-версия
 on:
   push:
@@ -33,7 +33,7 @@ jobs:
           convert assets/icon.png -resize 180x180 public/apple-touch-icon.png
       - run: npx expo export -p web --output-dir dist
         env:
-          WEB_BASE_URL: /tempo-run
+          WEB_BASE_URL: /run
           EXPO_NO_TELEMETRY: 1
       - run: cp dist/index.html dist/404.html && touch dist/.nojekyll
       - uses: actions/upload-pages-artifact@v3
