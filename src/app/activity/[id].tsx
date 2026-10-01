@@ -8,7 +8,6 @@ import RunMap from '../../components/RunMap';
 import { makeSticker } from '../../components/card/model';
 import { newAchievementsFor, type AchievementState } from '../../lib/achievements';
 import { setDraft } from '../../lib/cardStore';
-import { say } from '../../lib/voice';
 import { Button, SectionTitle } from '../../components/ui';
 import { formatDate, formatDuration, formatKm, formatPace, formatTime, paceSecPerKm, speedKmh, weekdayName } from '../../lib/geo';
 import { ClubError, resyncIfShared, shareRun, unshareRun, clubConfigured } from '../../lib/club';
@@ -37,7 +36,6 @@ export default function ActivityScreen() {
       const found = newAchievementsFor(await listRuns(), id, s.gender);
       if (!found.length) return;
       setNewAch(found);
-      if (s.voiceEnabled) say(`Новое достижение! ${found[0].name}`, false);
     })().catch(() => {});
   }, [id, fresh]);
 
