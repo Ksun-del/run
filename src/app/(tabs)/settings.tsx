@@ -170,6 +170,9 @@ export default function SettingsScreen() {
               { value: 5, label: '5 км' },
             ]}
           />
+          <Text style={[styles.tip, { marginTop: 14 }]}>
+            Музыка или книга на время подсказки встаёт на паузу и потом продолжается сама.
+          </Text>
           <Button
             title="Проверить голос"
             kind="secondary"
