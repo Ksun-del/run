@@ -3,7 +3,7 @@
     "name": "RUN",
     "slug": "tempo-run",
     "scheme": "tempo",
-    "version": "1.3.0",
+    "version": "1.3.1",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "dark",
@@ -38,7 +38,7 @@
         "android.permission.health.READ_HEART_RATE",
         "android.permission.health.READ_EXERCISE_ROUTES"
       ],
-      "versionCode": 6
+      "versionCode": 7
     },
     "web": {
       "favicon": "./assets/favicon.png",
@@ -89,14 +89,6 @@
           "image": "./assets/splash-icon.png",
           "imageWidth": 180,
           "resizeMode": "contain"
-        }
-      ],
-      [
-        "expo-audio",
-        {
-          "recordAudioAndroid": false,
-          "enableBackgroundPlayback": false,
-          "microphonePermission": false
         }
       ]
     ],
