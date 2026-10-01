@@ -1,2 +1,3 @@
-export async function duckStart() {}
-export async function duckEnd() {}
+export function pauseOthers() {}
+export function resumeOthersSoon(_delayMs?: number) {}
+export function resumeOthers() {}

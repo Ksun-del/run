@@ -1,5 +1,5 @@
 import * as Speech from 'expo-speech';
-import { duckEnd, duckStart } from './duck';
+import { pauseOthers, resumeOthersSoon } from './duck';
 
 function plural(n: number, one: string, few: string, many: string) {
   const m10 = n % 10;
@@ -27,23 +27,31 @@ function spokenKm(km: number): string {
   return `${a} и ${Number(b)} сотых километра`;
 }
 
-/** interrupt=false — встать в очередь после текущей фразы. Музыка на время фразы приглушается. */
+// Фразы, которые сейчас звучат или ждут в очереди. Пока список не пуст — чужая музыка на паузе.
+const speaking = new Set<number>();
+let nextId = 1;
+
+/** interrupt=false — встать в очередь после текущей фразы. Музыка и книги на время фразы встают на паузу. */
 export function say(text: string, interrupt = true) {
   try {
-    if (interrupt) Speech.stop();
-    duckStart();
-    let done = false;
+    if (interrupt) {
+      speaking.clear(); // прерванные фразы больше не держат паузу
+      Speech.stop();
+    }
+    const id = nextId++;
+    speaking.add(id);
+    pauseOthers();
     const end = () => {
-      if (done) return;
-      done = true;
-      // небольшая пауза, чтобы музыка не «прыгала» между фразами
-      setTimeout(() => duckEnd(), 400);
+      if (!speaking.delete(id)) return;
+      if (speaking.size === 0) resumeOthersSoon();
     };
     Speech.speak(text, { language: 'ru-RU', rate: 1.0, pitch: 1.0, onDone: end, onStopped: end, onError: end });
-    // страховка: если колбэк не пришёл, всё равно вернём громкость
+    // страховка: если колбэк не пришёл, всё равно вернём музыку
     setTimeout(end, 20000);
   } catch {
     // голос недоступен — просто молчим
+    speaking.clear();
+    resumeOthersSoon(0);
   }
 }
 

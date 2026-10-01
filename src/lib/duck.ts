@@ -1,44 +1,36 @@
 /**
- * Приглушение чужой музыки (Яндекс Музыка и т.п.), пока звучит подсказка.
- * Android приглушает другие приложения, когда мы «играем» звук с режимом duckOthers,
- * поэтому на время фразы крутим беззвучный файл, а потом отпускаем аудиофокус.
+ * Пауза чужой музыки и книг (Яндекс Музыка, аудиокниги и т.п.), пока звучит подсказка.
+ * Просим у Android «временный» аудиофокус: плееры сами встают на паузу,
+ * а когда отдаём фокус — сами продолжают. Свой плеер не держим, громкость не трогаем.
  */
-import { createAudioPlayer, setAudioModeAsync, setIsAudioActiveAsync, type AudioPlayer } from 'expo-audio';
+import AudioFocus from '../../modules/audio-focus';
 
-let player: AudioPlayer | null = null;
-let ready: Promise<void> | null = null;
-let active = 0;
+let releaseTimer: ReturnType<typeof setTimeout> | null = null;
 
-function init() {
-  if (!ready) {
-    ready = (async () => {
-      await setAudioModeAsync({ interruptionMode: 'duckOthers', shouldPlayInBackground: true, playsInSilentMode: true });
-      player = createAudioPlayer(require('../../assets/silence.wav'));
-      player.loop = true;
-      player.volume = 0;
-    })().catch(() => {
-      ready = null;
-    });
+/** Поставить музыку на паузу (перед фразой) */
+export function pauseOthers() {
+  if (releaseTimer) {
+    clearTimeout(releaseTimer);
+    releaseTimer = null;
   }
-  return ready;
-}
-
-/** Приглушить музыку (вызывать перед фразой) */
-export async function duckStart() {
-  active++;
   try {
-    await init();
-    await setIsAudioActiveAsync(true);
-    player?.play();
+    AudioFocus?.request();
   } catch {}
 }
 
-/** Вернуть громкость (вызывать после фразы) */
-export async function duckEnd() {
-  active = Math.max(0, active - 1);
-  if (active > 0) return;
+/** Вернуть музыку чуть позже — чтобы между фразами книга не «дёргалась» */
+export function resumeOthersSoon(delayMs = 600) {
+  if (releaseTimer) clearTimeout(releaseTimer);
+  releaseTimer = setTimeout(resumeOthers, delayMs);
+}
+
+/** Вернуть музыку сразу */
+export function resumeOthers() {
+  if (releaseTimer) {
+    clearTimeout(releaseTimer);
+    releaseTimer = null;
+  }
   try {
-    player?.pause();
-    await setIsAudioActiveAsync(false); // отдаём аудиофокус — музыка снова громкая
+    AudioFocus?.abandon();
   } catch {}
 }
