@@ -70,55 +70,74 @@ export default function WeekCard({ runs, settings, onSettings }: { runs: RunSumm
   const goal = settings.weekGoalKm;
   const left = goal - week.km;
   const done = goal > 0 && left <= 0;
+  // началась новая неделя, а цель осталась с прошлой — спрашиваем, какую ставим теперь
+  const ask = goal > 0 && settings.weekGoalWeek !== startOfWeek();
 
   const setGoal = async (v: number) => {
     setGoalSheet(false);
-    const next = await saveSettings({ weekGoalKm: v });
+    const next = await saveSettings({ weekGoalKm: v, weekGoalWeek: startOfWeek() });
     reloadSettings();
     onSettings(next);
   };
 
   return (
     <View style={styles.card}>
-      <Pressable style={styles.goal} onPress={() => setGoalSheet(true)}>
-        {goal > 0 ? (
-          <>
-            <View>
-              <Ring progress={week.km / goal} />
-              <View style={styles.ringCenter}>
-                {done ? (
-                  <Ionicons name="checkmark" size={24} color={colors.accent} />
-                ) : (
-                  <Text style={styles.ringPct}>{Math.floor((week.km / goal) * 100)}%</Text>
-                )}
+      {ask ? (
+        <View>
+          <Text style={styles.askTitle}>Новая неделя! Какую цель поставим?</Text>
+          <View style={styles.askRow}>
+            <Pressable onPress={() => setGoal(goal)} style={[styles.askBtn, styles.askMain]}>
+              <Text style={[styles.askText, { color: colors.accentText }]}>Снова {goal} км</Text>
+            </Pressable>
+            <Pressable onPress={() => setGoalSheet(true)} style={styles.askBtn}>
+              <Text style={styles.askText}>Другую</Text>
+            </Pressable>
+            <Pressable onPress={() => setGoal(0)} style={styles.askBtn}>
+              <Text style={[styles.askText, { color: colors.muted }]}>Без цели</Text>
+            </Pressable>
+          </View>
+        </View>
+      ) : (
+        <Pressable style={styles.goal} onPress={() => setGoalSheet(true)}>
+          {goal > 0 ? (
+            <>
+              <View>
+                <Ring progress={week.km / goal} />
+                <View style={styles.ringCenter}>
+                  {done ? (
+                    <Ionicons name="checkmark" size={24} color={colors.accent} />
+                  ) : (
+                    <Text style={styles.ringPct}>{Math.floor((week.km / goal) * 100)}%</Text>
+                  )}
+                </View>
               </View>
-            </View>
-            <View style={{ flex: 1 }}>
-              <Text style={styles.small}>Цель недели</Text>
-              <Text style={styles.big}>
-                {formatKm(week.km * 1000, 1)} <Text style={styles.of}>из {goal} км</Text>
-              </Text>
-              <Text style={[styles.small, done && { color: colors.accent }]} numberOfLines={2}>
-                {done
-                  ? `Выполнена! ${week.count} ${runsWord(week.count)} — так держать`
-                  : `Осталось ${formatKm(left * 1000, 1)} км · ${week.count} ${runsWord(week.count)}`}
-              </Text>
-            </View>
-          </>
-        ) : (
-          <>
-            <View style={styles.weekIcon}>
-              <Text style={styles.weekKm}>{formatKm(week.km * 1000, 1)}</Text>
-            </View>
-            <View style={{ flex: 1 }}>
-              <Text style={styles.small}>
-                км на этой неделе · {week.count} {runsWord(week.count)}
-              </Text>
-              <Text style={styles.setGoal}>+ Поставить цель на неделю</Text>
-            </View>
-          </>
-        )}
-      </Pressable>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.small}>Цель недели</Text>
+                <Text style={styles.big}>
+                  {formatKm(week.km * 1000, 1)} <Text style={styles.of}>из {goal} км</Text>
+                </Text>
+                <Text style={[styles.small, done && { color: colors.accent }]} numberOfLines={2}>
+                  {done
+                    ? `Выполнена! ${week.count} ${runsWord(week.count)} — так держать`
+                    : `Осталось ${formatKm(left * 1000, 1)} км · ${week.count} ${runsWord(week.count)}`}
+                </Text>
+              </View>
+            </>
+          ) : (
+            <>
+              <View style={styles.weekIcon}>
+                <Text style={styles.weekKm}>{formatKm(week.km * 1000, 1)}</Text>
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.small}>
+                  км на этой неделе · {week.count} {runsWord(week.count)}
+                </Text>
+                <Text style={styles.setGoal}>+ Поставить цель на неделю</Text>
+              </View>
+            </>
+          )}
+        </Pressable>
+      )}
 
       {shoe && (
         <Pressable style={styles.shoe} onPress={() => router.push('/(tabs)/settings')}>
@@ -131,7 +150,9 @@ export default function WeekCard({ runs, settings, onSettings }: { runs: RunSumm
       )}
 
       <Sheet visible={goalSheet} title="Цель на неделю" onClose={() => setGoalSheet(false)}>
-        <Text style={styles.sheetText}>Сколько километров хочется пробегать за неделю? Кольцо будет заполняться с каждой пробежкой.</Text>
+        <Text style={styles.sheetText}>
+          Сколько километров хочется пробежать за эту неделю? Кольцо будет заполняться с каждой пробежкой. В понедельник спрошу про цель снова.
+        </Text>
         <View style={styles.goals}>
           {GOALS.map((v) => (
             <Pressable key={v} onPress={() => setGoal(v)} style={[styles.goalChip, goal === v && styles.goalChipOn]}>
@@ -187,5 +208,10 @@ const styles = StyleSheet.create({
   customRow: { flexDirection: 'row', gap: 8, marginTop: 14 },
   input: { flex: 1, height: 46, borderRadius: 12, backgroundColor: colors.surface2, color: colors.text, fontFamily: fonts.bodyMedium, fontSize: 16, paddingHorizontal: 14 },
   okBtn: { width: 64, height: 46, borderRadius: 12, backgroundColor: colors.accent, alignItems: 'center', justifyContent: 'center' },
+  askTitle: { fontFamily: fonts.bodySemi, color: colors.text, fontSize: 15, marginBottom: 10 },
+  askRow: { flexDirection: 'row', gap: 8 },
+  askBtn: { flex: 1, height: 40, borderRadius: 20, backgroundColor: colors.surface2, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 6 },
+  askMain: { flex: 1.3, backgroundColor: colors.accent },
+  askText: { fontFamily: fonts.bodySemi, color: colors.text, fontSize: 14 },
   okText: { fontFamily: fonts.bodyBold, color: colors.accentText, fontSize: 15 },
 });

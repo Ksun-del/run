@@ -36,6 +36,8 @@ export type Settings = {
   gender: 'f' | 'm' | '';
   /** цель на неделю, км (0 — не задана) */
   weekGoalKm: number;
+  /** неделя (начало недели, мс), на которую цель подтверждена — в новую неделю спрашиваем заново */
+  weekGoalWeek: number;
   /** автопауза на светофорах */
   autoPause: boolean;
   /** кроссовки, в которых бегаю сейчас */
@@ -50,6 +52,7 @@ export const DEFAULT_SETTINGS: Settings = {
   clubCode: '',
   gender: '',
   weekGoalKm: 0,
+  weekGoalWeek: 0,
   autoPause: true,
   activeShoeId: null,
 };

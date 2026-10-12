@@ -6,7 +6,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Crypto from 'expo-crypto';
 import { CLUB_API_URL } from './config';
 import { simplify, type TrackPoint } from './geo';
-import { getRun, getSettings, markClubShared, type Run } from './storage';
+import { getRun, getSettings, markClubShared, type Run, type Settings } from './storage';
 
 const DEVICE_KEY = 'tempo:device-id';
 
@@ -39,6 +39,9 @@ export type LeaderRow = {
 export class ClubError extends Error {}
 
 export const clubConfigured = () => CLUB_API_URL.length > 0;
+
+/** Участник клуба: ввёл код клуба. Только у участников есть вкладка «Клуб», кнопка «В клуб» и логотипы клуба. */
+export const isClubMember = (s: Settings | null | undefined) => clubConfigured() && !!s?.clubCode;
 
 async function deviceId(): Promise<string> {
   let id = await AsyncStorage.getItem(DEVICE_KEY);

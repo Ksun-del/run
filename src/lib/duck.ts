@@ -5,32 +5,24 @@
  */
 import AudioFocus from '../../modules/audio-focus';
 
-let releaseTimer: ReturnType<typeof setTimeout> | null = null;
-
 /** Поставить музыку на паузу (перед фразой) */
 export function pauseOthers() {
-  if (releaseTimer) {
-    clearTimeout(releaseTimer);
-    releaseTimer = null;
-  }
   try {
     AudioFocus?.request();
   } catch {}
 }
 
-/** Вернуть музыку чуть позже — чтобы между фразами книга не «дёргалась» */
+/**
+ * Вернуть музыку чуть позже — чтобы между фразами книга не «дёргалась».
+ * Задержку отсчитывает сам Android: при выключенном экране таймеры JS не срабатывают.
+ */
 export function resumeOthersSoon(delayMs = 600) {
-  if (releaseTimer) clearTimeout(releaseTimer);
-  releaseTimer = setTimeout(resumeOthers, delayMs);
+  try {
+    AudioFocus?.abandon(delayMs);
+  } catch {}
 }
 
 /** Вернуть музыку сразу */
 export function resumeOthers() {
-  if (releaseTimer) {
-    clearTimeout(releaseTimer);
-    releaseTimer = null;
-  }
-  try {
-    AudioFocus?.abandon();
-  } catch {}
+  resumeOthersSoon(0);
 }

@@ -3,6 +3,7 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { useMemo, useRef, useState } from 'react';
 import { ActivityIndicator, Alert, Platform, Pressable, ScrollView, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { isClubMember } from '../../lib/club';
 import SummaryCard from '../../components/SummaryCard';
 import { saveCard, shareCard, webShareHint } from '../../lib/cardExport';
 import { useRuns, useSettings } from '../../lib/hooks';
@@ -94,7 +95,7 @@ export default function SummaryScreen() {
             <View style={styles.preview}>
               <View style={[styles.shadow, { width: cardW, height: cardW * RATIO }]}>
                 <View ref={card} collapsable={false}>
-                  <SummaryCard s={summary} width={cardW} name={settings.name} gender={settings.gender || 'f'} />
+                  <SummaryCard s={summary} width={cardW} name={settings.name} gender={settings.gender || 'f'} club={isClubMember(settings)} />
                 </View>
               </View>
             </View>

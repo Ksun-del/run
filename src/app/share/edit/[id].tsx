@@ -4,7 +4,7 @@ import { useMemo, useState, type ReactNode } from 'react';
 import { KeyboardAvoidingView, Pressable, ScrollView, StyleSheet, Text, TextInput, useWindowDimensions, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import CardCanvas from '../../../components/card/CardCanvas';
-import { ACCENT, makeSet, makeSticker, RATIO, seasonalStickers, SETS, STICKER_MENU, type Sticker, type Tint } from '../../../components/card/model';
+import { ACCENT, makeSet, makeSticker, RATIO, seasonalStickers, setList, stickerMenu, type Sticker, type Tint } from '../../../components/card/model';
 import { computeAchievements } from '../../../lib/achievements';
 import { useRuns, useSettings } from '../../../lib/hooks';
 import Sheet, { SheetOption } from '../../../components/Sheet';
@@ -137,7 +137,7 @@ export default function StickerEditor() {
 
       <Sheet visible={sheet === 'sets'} title="Наборы" onClose={() => setSheet(null)}>
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 12, paddingBottom: 6 }}>
-          {SETS.map((set) => {
+          {setList().map((set) => {
             const preview = { ...comp, set: set.id, ...makeSet(set.id, comp.format) };
             const active = comp.set === set.id;
             return (
@@ -163,7 +163,7 @@ export default function StickerEditor() {
 
       <Sheet visible={sheet === 'stickers'} title="Добавить стикер" onClose={() => setSheet(null)}>
         <View style={styles.chips}>
-          {STICKER_MENU.map((m) => (
+          {stickerMenu().map((m) => (
             <Pressable key={m.kind} onPress={() => add(makeSticker(m.kind))} style={({ pressed }) => [styles.chip, pressed && { opacity: 0.6 }]}>
               <Text style={styles.chipText}>+ {m.label}</Text>
             </Pressable>

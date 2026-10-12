@@ -12,6 +12,7 @@ import * as Location from 'expo-location';
 import * as TaskManager from 'expo-task-manager';
 import { PermissionsAndroid, Platform } from 'react-native';
 import { defaultRunTitle, elevationGain, haversine, type TrackPoint } from './geo';
+import { GpsFilter } from './gpsFilter';
 import { getSettings, saveRun, type Run, type Settings } from './storage';
 import { announceFinish, announceSplit, say } from './voice';
 
@@ -23,12 +24,10 @@ const BG_GUARD_KEY = 'tempo:bg-guard';
 const BG_BROKEN_KEY = 'tempo:bg-broken';
 const KEEP_AWAKE_TAG = 'tempo-run';
 
-/** Точки хуже этой точности (м) отбрасываем */
+/** Точки хуже этой точности (м) не берём даже для автопаузы */
 const MAX_ACCURACY_M = 35;
-/** Скачки быстрее этой скорости (м/с ≈ 43 км/ч) считаем ошибкой GPS */
-const MAX_SPEED_MS = 12;
-/** Меньшие смещения считаем дрожанием GPS на месте */
-const MIN_STEP_M = 4;
+/** А в трек и километраж — только точки не хуже этой точности (м) */
+const TRACK_ACCURACY_M = 30;
 
 export type RunStatus = 'running' | 'paused';
 
@@ -58,6 +57,9 @@ let settings: Settings | null = null;
 let watchSub: Location.LocationSubscription | null = null;
 let persistTimer: ReturnType<typeof setTimeout> | null = null;
 let bgBroken = false;
+/** Сглаживание GPS (см. gpsFilter.ts); сбрасывается на каждом новом отрезке */
+const gps = new GpsFilter();
+let gpsSeg = -1;
 let guardArmed = false;
 
 /** Последние точки GPS (не только принятые в трек) — по ним видно, стоим мы или бежим */
@@ -195,17 +197,23 @@ function handleLocations(locations: Location.LocationObject[]) {
     if (state.status !== 'running') continue;
     if (t < state.lastResumeAt - 1500) continue;
 
-    const point: TrackPoint = { lat, lon, t, alt: altitude, seg: state.seg };
+    if (accuracy != null && accuracy > TRACK_ACCURACY_M) continue;
+    if (gpsSeg !== state.seg) {
+      gps.reset();
+      gpsSeg = state.seg;
+    }
+    const f = gps.push({ lat, lon, t, acc: accuracy ?? null, speed: loc.coords.speed ?? null });
+    if (!f) continue;
+
+    const point: TrackPoint = { lat: f.lat, lon: f.lon, t, alt: altitude, seg: state.seg };
     const prev = state.points[state.points.length - 1];
     if (!prev || prev.seg !== state.seg) {
       state.points.push(point);
       continue;
     }
-    const d = haversine(prev.lat, prev.lon, lat, lon);
-    const dt = (t - prev.t) / 1000;
-    if (dt <= 0) continue;
-    if (d / dt > MAX_SPEED_MS) continue;
-    if (d < MIN_STEP_M) continue;
+    // фильтр только что запущен (приложение перезапускалось посреди пробежки) — считаем от прошлой точки
+    const d = f.d > 0 ? f.d : haversine(prev.lat, prev.lon, f.lat, f.lon);
+    if (d <= 0 || t <= prev.t) continue;
 
     const prevDist = state.distanceM;
     const prevMoving = prev.t - state.startedAt - state.pausedTotal;
@@ -335,6 +343,7 @@ export async function startRun(): Promise<ActiveRun> {
     lastFix: null,
   };
   recent = [];
+  gpsSeg = -1;
   loaded = true;
   notify();
   state.mode = await startUpdates();

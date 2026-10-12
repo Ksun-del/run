@@ -35,7 +35,7 @@ function runsWord(n: number) {
   return 'пробежек';
 }
 
-export default function SummaryCard({ s, width, name, gender }: { s: Summary; width: number; name: string; gender: Gender }) {
+export default function SummaryCard({ s, width, name, gender, club = true }: { s: Summary; width: number; name: string; gender: Gender; club?: boolean }) {
   const k = width / 360;
   const height = (width * 16) / 9;
   const p = s.period;
@@ -52,8 +52,10 @@ export default function SummaryCard({ s, width, name, gender }: { s: Summary; wi
       <View style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 5 * k, backgroundColor: A }} />
 
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 * k }}>
-        <Image source={require('../../assets/club/pobeda-emblem.png')} style={{ width: 36 * k * (800 / 717), height: 36 * k }} resizeMode="contain" />
-        <Text style={[st.brand, T(12, { letterSpacing: 2 * k })]}>POBEDA RUN</Text>
+        {club && (
+          <Image source={require('../../assets/club/pobeda-emblem.png')} style={{ width: 36 * k * (800 / 717), height: 36 * k }} resizeMode="contain" />
+        )}
+        <Text style={[st.brand, T(12, { letterSpacing: 2 * k })]}>{club ? 'POBEDA RUN' : 'RUN'}</Text>
         <View style={{ flex: 1 }} />
         {!!name && <Text style={[st.name, T(13)]} numberOfLines={1}>{name}</Text>}
       </View>

@@ -14,6 +14,7 @@ import { importGpxFile } from '../../lib/importRun';
 import { availablePeriods, parsePeriod } from '../../lib/summary';
 import type { RunSummary } from '../../lib/storage';
 import { colors, fonts } from '../../lib/theme';
+import { isClubMember } from '../../lib/club';
 
 const MONTHS = ['Январь', 'Февраль', 'Март', 'Апрель', 'Май', 'Июнь', 'Июль', 'Август', 'Сентябрь', 'Октябрь', 'Ноябрь', 'Декабрь'];
 
@@ -84,7 +85,12 @@ export default function HistoryScreen() {
   const { runs, loading } = useRuns();
   const [period, setPeriod] = useState<Period>('week');
   const settings = useSettings();
-  const achievements = useMemo(() => computeAchievements(runs, settings?.gender ?? 'f'), [runs, settings?.gender]);
+  // «В клубе» показываем только участникам клуба
+  const club = isClubMember(settings);
+  const achievements = useMemo(
+    () => computeAchievements(runs, settings?.gender ?? 'f').filter((a) => club || a.id !== 'club'),
+    [runs, settings?.gender, club],
+  );
   const earnedCount = achievements.filter((a) => a.earnedAt != null).length;
   const [openAch, setOpenAch] = useState<AchievementState | null>(null);
   const [achOpen, setAchOpen] = useState(false);

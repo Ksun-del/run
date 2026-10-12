@@ -57,6 +57,17 @@ export type Composition = {
 export const ACCENT = '#FFB900';
 export const tintColor = (t: Tint) => (t === 'accent' ? ACCENT : '#FFFFFF');
 
+/** Логотипы клуба на карточках — только у участников клуба (у знакомых без кода клуба их нет) */
+let clubLogos = true;
+export function setClubLogos(on: boolean) {
+  clubLogos = on;
+}
+const isLogo = (k: StickerKind) => k === 'logo1' || k === 'logo2';
+/** Стикеры для меню «Добавить стикер» с учётом клуба */
+export const stickerMenu = () => (clubLogos ? STICKER_MENU : STICKER_MENU.filter((m) => !isLogo(m.kind)));
+/** Наборы с учётом клуба */
+export const setList = () => (clubLogos ? SETS : SETS.filter((x) => x.id !== 'logo'));
+
 let seq = 0;
 export const newId = () => `s${Date.now().toString(36)}${(seq++).toString(36)}`;
 
@@ -110,6 +121,11 @@ export const SETS: { id: SetId; name: string }[] = [
  * Наборы — готовые раскладки стикеров. Размеры заданы в «единицах»: ширина карточки = 360.
  */
 export function makeSet(id: SetId, format: Format): { stickers: Sticker[]; shade: Shade } {
+  const r = buildSet(id, format);
+  return clubLogos ? r : { ...r, stickers: r.stickers.filter((x) => !isLogo(x.kind)) };
+}
+
+function buildSet(id: SetId, format: Format): { stickers: Sticker[]; shade: Shade } {
   const W = 360;
   const H = 360 * RATIO[format];
   const at = (kind: StickerKind, anchor: Anchor, ux: number, uy: number, extra: Partial<Sticker> = {}): Sticker => ({

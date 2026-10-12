@@ -1,9 +1,9 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import * as Location from 'expo-location';
 import { router, useFocusEffect } from 'expo-router';
-import { useCallback, useState } from 'react';
-import { ActivityIndicator, Alert, Pressable, StyleSheet, Text, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { ActivityIndicator, Alert, Animated, Pressable, StyleSheet, Text, View } from 'react-native';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import RunMap from '../../components/RunMap';
 import InstallHint from '../../components/InstallHint';
 import Welcome from '../../components/Welcome';
@@ -17,7 +17,31 @@ import { colors, fonts } from '../../lib/theme';
 import { takeLastCrash } from '../../lib/crash';
 import { PermissionError, startRun } from '../../lib/tracker';
 
+/** Приветствие показываем один раз за запуск приложения */
+let greeted = false;
+
+/** «Привет, Ксю» на пару секунд, потом плавно исчезает и освобождает карту */
+function Greeting({ text }: { text: string }) {
+  const [show, setShow] = useState(!greeted);
+  const opacity = useRef(new Animated.Value(1)).current;
+  useEffect(() => {
+    if (!show) return;
+    greeted = true;
+    const t = setTimeout(() => {
+      Animated.timing(opacity, { toValue: 0, duration: 600, useNativeDriver: true }).start(() => setShow(false));
+    }, 2500);
+    return () => clearTimeout(t);
+  }, [show, opacity]);
+  if (!show) return null;
+  return (
+    <Animated.View style={{ opacity }} pointerEvents="none">
+      <Text style={styles.hello}>{text}</Text>
+    </Animated.View>
+  );
+}
+
 export default function HomeScreen() {
+  const insets = useSafeAreaInsets();
   const active = useActiveRun();
   const { runs } = useRuns();
   const [me, setMe] = useState<{ lat: number; lon: number } | null>(null);
@@ -82,9 +106,11 @@ export default function HomeScreen() {
           style={StyleSheet.absoluteFill}
         />
       )}
-      <View style={styles.topShade} pointerEvents="none" />
+      <View style={[styles.topShade, { height: insets.top }]} pointerEvents="none" />
       <SafeAreaView edges={['top']} style={styles.header} pointerEvents="box-none">
-        <Text style={styles.hello}>{settings?.name ? `Привет, ${settings.name}` : g(settings?.gender ?? '', 'Готова к пробежке?', 'Готов к пробежке?')}</Text>
+        {settings && (
+          <Greeting text={settings.name ? `Привет, ${settings.name}` : g(settings.gender, 'Готова к пробежке?', 'Готов к пробежке?')} />
+        )}
         {settings && <WeekCard runs={runs} settings={settings} onSettings={setSettings} />}
         <SummaryBanner runs={runs} />
         {!me && (
@@ -116,9 +142,17 @@ export default function HomeScreen() {
 
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.bg },
-  topShade: { position: 'absolute', top: 0, left: 0, right: 0, height: 150, backgroundColor: 'rgba(11,11,12,0.72)' },
+  topShade: { position: 'absolute', top: 0, left: 0, right: 0, backgroundColor: 'rgba(11,11,12,0.72)' },
   header: { paddingHorizontal: 20, paddingTop: 12 },
-  hello: { fontFamily: fonts.display, color: colors.text, fontSize: 30, textTransform: 'uppercase' },
+  hello: {
+    fontFamily: fonts.display,
+    color: colors.text,
+    fontSize: 30,
+    textTransform: 'uppercase',
+    textShadowColor: 'rgba(0,0,0,0.85)',
+    textShadowRadius: 8,
+    textShadowOffset: { width: 0, height: 1 },
+  },
   gps: { flexDirection: 'row', gap: 6, alignItems: 'center', marginTop: 10 },
   gpsText: { fontFamily: fonts.body, color: colors.muted, fontSize: 12 },
   bottom: { position: 'absolute', left: 0, right: 0, bottom: 28, alignItems: 'center' },

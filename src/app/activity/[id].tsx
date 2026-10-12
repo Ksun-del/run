@@ -10,7 +10,7 @@ import { newAchievementsFor, type AchievementState } from '../../lib/achievement
 import { setDraft } from '../../lib/cardStore';
 import { Button, SectionTitle } from '../../components/ui';
 import { formatDate, formatDuration, formatKm, formatPace, formatTime, paceSecPerKm, speedKmh, weekdayName } from '../../lib/geo';
-import { ClubError, resyncIfShared, shareRun, unshareRun, clubConfigured } from '../../lib/club';
+import { ClubError, resyncIfShared, shareRun, unshareRun, isClubMember } from '../../lib/club';
 import { deleteRun, getRun, getSettings, listRuns, setRunShoe, updateRunTitle, type Run, type Settings } from '../../lib/storage';
 import { useShoes } from '../../lib/shoes';
 import Sheet, { SheetOption } from '../../components/Sheet';
@@ -227,7 +227,7 @@ export default function ActivityScreen() {
       />
       <SafeAreaView edges={['bottom']} style={styles.footer}>
         <View style={{ flexDirection: 'row', gap: 10 }}>
-          {clubConfigured() && (
+          {isClubMember(settings) && (
             <Button
               title={shared ? 'В клубе ✓' : 'В клуб'}
               kind="secondary"
