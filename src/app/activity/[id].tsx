@@ -15,6 +15,7 @@ import { deleteRun, getRun, getSettings, listRuns, setRunShoe, updateRunTitle, t
 import { useShoes } from '../../lib/shoes';
 import Sheet, { SheetOption } from '../../components/Sheet';
 import { splitRows } from '../../lib/splits';
+import { exportGpx } from '../../lib/gpxExport';
 import { colors, fonts } from '../../lib/theme';
 
 export default function ActivityScreen() {
@@ -27,6 +28,7 @@ export default function ActivityScreen() {
   const [newAch, setNewAch] = useState<AchievementState[]>([]);
   const shoes = useShoes();
   const [shoeSheet, setShoeSheet] = useState(false);
+  const [gpxBusy, setGpxBusy] = useState(false);
 
   // Сразу после финиша — проверяем новые достижения
   useEffect(() => {
@@ -113,6 +115,18 @@ export default function ActivityScreen() {
       },
     ]);
 
+  const onGpx = async () => {
+    setGpxBusy(true);
+    try {
+      const r = await exportGpx(run);
+      if (r === 'unavailable') Alert.alert('Выгрузить нельзя', 'На этом устройстве недоступно меню «Поделиться».');
+    } catch (e) {
+      Alert.alert('Не получилось выгрузить', e instanceof Error ? e.message : String(e));
+    } finally {
+      setGpxBusy(false);
+    }
+  };
+
   const close = () => (fresh ? router.replace('/history') : router.back());
 
   return (
@@ -198,6 +212,14 @@ export default function ActivityScreen() {
                 );
               })}
             </>
+          )}
+
+          {run.points.length > 1 && (
+            <Pressable style={[styles.shoeRow, { marginTop: 22 }]} onPress={onGpx} disabled={gpxBusy}>
+              <Ionicons name="download-outline" size={18} color={colors.accent} />
+              <Text style={styles.shoeText}>Выгрузить GPX</Text>
+              {gpxBusy ? <ActivityIndicator color={colors.muted} /> : <Ionicons name="chevron-forward" size={18} color={colors.muted} />}
+            </Pressable>
           )}
         </View>
       </ScrollView>

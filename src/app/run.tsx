@@ -5,27 +5,13 @@ import { Alert, Platform, Pressable, StyleSheet, Text, View } from 'react-native
 import { SafeAreaView } from 'react-native-safe-area-context';
 import RunMap, { type RunMapHandle } from '../components/RunMap';
 import { Stat } from '../components/ui';
-import { formatDuration, formatKm, formatPace, haversine, paceSecPerKm, type TrackPoint } from '../lib/geo';
+import { formatDuration, formatKm, formatPace, paceSecPerKm } from '../lib/geo';
+import { PaceHold } from '../lib/paceHold';
 import { useActiveRun, useNow } from '../lib/hooks';
 import { getSettings, type Settings } from '../lib/storage';
 import { colors, fonts } from '../lib/theme';
 import { finishRun, movingTime, pauseRun, resumeRun } from '../lib/tracker';
 import { openMusic } from '../lib/music';
-
-/** Текущий темп по последним ~30 секундам текущего отрезка */
-function currentPace(points: TrackPoint[], seg: number): number | null {
-  const last = points[points.length - 1];
-  if (!last || last.seg !== seg) return null;
-  let d = 0;
-  let i = points.length - 1;
-  while (i > 0 && points[i - 1].seg === seg && last.t - points[i - 1].t <= 30000) {
-    d += haversine(points[i - 1].lat, points[i - 1].lon, points[i].lat, points[i].lon);
-    i--;
-  }
-  const dt = last.t - points[i].t;
-  if (d < 20 || dt < 8000) return null;
-  return dt / 1000 / (d / 1000);
-}
 
 export default function RunScreen() {
   const run = useActiveRun();
@@ -33,6 +19,7 @@ export default function RunScreen() {
   const map = useRef<RunMapHandle>(null);
   const [settings, setSettings] = useState<Settings | null>(null);
   const [finishing, setFinishing] = useState(false);
+  const paceHold = useRef(new PaceHold());
 
   useEffect(() => {
     getSettings().then(setSettings);
@@ -48,7 +35,8 @@ export default function RunScreen() {
 
   const elapsed = movingTime(run, run.status === 'paused' && run.pausedAt ? run.pausedAt : now);
   const avg = paceSecPerKm(run.distanceM, elapsed);
-  const cur = run.status === 'running' ? currentPace(points, run.seg) : null;
+  const curView = run.status === 'running' ? paceHold.current.update(Date.now(), points, run.seg, run.lastFix?.acc) : null;
+  const cur = curView?.pace ?? null;
   const me = run.lastFix ? { lat: run.lastFix.lat, lon: run.lastFix.lon } : null;
   const paused = run.status === 'paused';
 
@@ -123,7 +111,7 @@ export default function RunScreen() {
         <Stat value={formatKm(run.distanceM)} label="километры" big />
         <View style={styles.row}>
           <Stat value={formatDuration(elapsed)} label="время" style={styles.cell} />
-          <Stat value={formatPace(cur)} label="темп сейчас" style={styles.cell} />
+          <Stat value={formatPace(cur)} label={curView?.weak ? 'слабый GPS' : 'темп сейчас'} style={styles.cell} />
           <Stat value={formatPace(avg)} label="ср. темп" style={styles.cell} />
         </View>
 
