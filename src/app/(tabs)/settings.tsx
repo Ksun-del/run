@@ -134,7 +134,7 @@ export default function SettingsScreen() {
             <View style={{ flex: 1, paddingRight: 12 }}>
               <Text style={styles.rowText}>Автопауза</Text>
               <Text style={[styles.label, { marginTop: 4, marginBottom: 0 }]}>
-                На светофоре время останавливается само и продолжается, как только {s.gender === 'm' ? 'побежал' : 'побежала'}
+                На светофоре время останавливается само и продолжается, как только {s.gender === 'm' ? 'побежал' : 'побежала'}. Музыку не прерывает — телефон коротко вибрирует
               </Text>
             </View>
             <Switch

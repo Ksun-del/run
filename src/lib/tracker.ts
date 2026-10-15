@@ -10,7 +10,7 @@ import { kv } from './kv';
 import { activateKeepAwakeAsync, deactivateKeepAwake } from 'expo-keep-awake';
 import * as Location from 'expo-location';
 import * as TaskManager from 'expo-task-manager';
-import { PermissionsAndroid, Platform } from 'react-native';
+import { PermissionsAndroid, Platform, Vibration } from 'react-native';
 import { defaultRunTitle, elevationGain, haversine, type TrackPoint } from './geo';
 import { GpsFilter } from './gpsFilter';
 import { getSettings, saveRun, type Run, type Settings } from './storage';
@@ -83,6 +83,14 @@ function voiceOn() {
   return settings?.voiceEnabled ?? true;
 }
 
+/** Автопауза без голоса — чтобы не прерывать музыку. Знак — короткая вибрация:
+ *  одна при остановке, две при старте. */
+function buzz(pattern: number[]) {
+  try {
+    Vibration.vibrate(pattern);
+  } catch {}
+}
+
 /** Автопауза: останавливаем время на светофоре и продолжаем, когда снова побежали */
 function autoPauseStep(t: number, lat: number, lon: number, speed: number | null) {
   if (!state || !(settings?.autoPause ?? true)) return;
@@ -97,7 +105,7 @@ function autoPauseStep(t: number, lat: number, lon: number, speed: number | null
       state.pausedAt = Math.min(t, Math.max(old.t, last?.t ?? old.t));
       state.auto = true;
       state.autoAnchor = { lat, lon };
-      if (voiceOn()) say('Автопауза');
+      buzz([0, 180]);
     }
   } else if (state.status === 'paused' && state.auto) {
     const old = fixAgo(t, 4000);
@@ -111,7 +119,7 @@ function autoPauseStep(t: number, lat: number, lon: number, speed: number | null
       state.auto = false;
       state.autoAnchor = null;
       state.lastResumeAt = t;
-      if (voiceOn()) say('Продолжаем');
+      buzz([0, 120, 120, 120]);
     }
   }
 }

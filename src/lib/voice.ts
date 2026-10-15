@@ -32,7 +32,7 @@ const speaking = new Set<number>();
 let nextId = 1;
 
 /** interrupt=false — встать в очередь после текущей фразы. Музыка и книги на время фразы встают на паузу. */
-export function say(text: string, interrupt = true) {
+export function say(text: string, interrupt = true, rate = 1.0) {
   try {
     if (interrupt) {
       speaking.clear(); // прерванные фразы больше не держат паузу
@@ -45,7 +45,7 @@ export function say(text: string, interrupt = true) {
       if (!speaking.delete(id)) return;
       if (speaking.size === 0) resumeOthersSoon();
     };
-    Speech.speak(text, { language: 'ru-RU', rate: 1.0, pitch: 1.0, onDone: end, onStopped: end, onError: end });
+    Speech.speak(text, { language: 'ru-RU', rate, pitch: 1.0, onDone: end, onStopped: end, onError: end });
     // страховка: если колбэк не пришёл, всё равно вернём музыку
     setTimeout(end, 20000);
   } catch {
@@ -55,11 +55,18 @@ export function say(text: string, interrupt = true) {
   }
 }
 
-export function announceSplit(km: number, totalMs: number, lastKmMs: number) {
-  say(
-    `${spokenKm(km)}. Время ${spokenDuration(totalMs)}. ` +
-      `Последний километр за ${spokenDuration(lastKmMs)}.`,
-  );
+/** Темп коротко: «6 12» (шесть двенадцать), «6 05», «ровно 6» */
+function spokenPace(ms: number): string {
+  const total = Math.round(ms / 1000);
+  const m = Math.floor(total / 60);
+  const s = total % 60;
+  if (s === 0) return `ровно ${m}`;
+  return `${m} ${String(s).padStart(2, '0')}`;
+}
+
+/** Коротко и чуть быстрее: «3 километра. Темп 6 12.» */
+export function announceSplit(km: number, _totalMs: number, lastKmMs: number) {
+  say(`${spokenKm(km)}. Темп ${spokenPace(lastKmMs)}.`, true, 1.2);
 }
 
 export function announceFinish(distanceM: number, durationMs: number) {
